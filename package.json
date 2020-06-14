@@ -1,0 +1,17 @@
+{
+  "name": "nodejs-socket",
+  "version": "1.0.0",
+  "description": "simple chat app with nodejs and socket",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js"
+  },
+  "author": "Dmitry Vorontsov",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^2.6.2",
+    "express": "^4.17.1",
+    "nodemon": "^1.19.4",
+    "socket.io": "^2.2.0"
+  }
+}
