@@ -1,10 +1,9 @@
-# Chat-app-with-node.js-and-socket.io
-![](https://github.com/YKalashnikov/Chat-app-with-node.js-and-socket.io/blob/master/file.png)
-
-```shell
-$ npm install
-$ nodemon app.js
-$ go to http://localhost:3000
-```
-
-
+# Simple ChatApp
+### Using Express.js and Socket.io
+---
+### Project setup
+- npm install
+- nodemon app.js
+- go to http://localhost:3000
+---
+![Screenshot](screenshot.jpg)
