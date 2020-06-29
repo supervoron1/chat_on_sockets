@@ -35,14 +35,6 @@ app.use(express.static("public"));
 //   const thirdAsyncRequest = await example.thirdAsyncRequest(secondResponse);
 // };
 
-let message = {
-  "email": "user@mail.com",
-  "image": "56",
-  "isAdmin": false,
-  "message": "Test from server",
-  "timeSent": new Date().toString(),
-  "userName": "Testovich",
-}
 const ref = admin.database().ref();
 const messagesRef = ref.child('messages');
 const usersRef = ref.child('users');
@@ -64,7 +56,7 @@ logsRef.on('child_removed', snap => {
 //   return snapshot.val();
 // });
 
-console.log('DB ' + db.ref() + ' connected');
+console.log('Database connected on ' + db.ref());
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -75,30 +67,54 @@ server = app.listen(PORT, () => console.log(`Server is running on localhost:${PO
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
-  const username = socket.handshake.query.username;
+  const username = socket.handshake.query.userName;
+  let data = socket.handshake.query;
+  delete data.EIO;
+  delete data.t;
+  delete data.transport;
   (username) ? socket.username = username : socket.username = 'Anonymous';
+  (data.userName !== 'Admin') ? usersRef.push(data) : false; // добавить проверку на дубль в БД
 
-  usersRef.on('child_changed', snapshot => {
+  usersRef.on('value', snapshot => {
     let users = snapshot.val();
-    io.sockets.emit('getUsers', { users });
+    io.sockets.emit('getUsers', users);
   });
+
+  messagesRef.on('value', snapshot=>{
+    let messages = snapshot.val();
+    io.sockets.emit('getMessages', messages);
+  })
 
   console.log(`User ${socket.username} connected`);
 
   socket.on('disconnect', () => {
+    const userID = socket.handshake.query.userID;
+    usersRef.orderByChild('userID').equalTo(`${userID}`).once('value', snapshot => {
+      snapshot.forEach(child => {
+        child.ref.update({"status": "offline"});
+      })
+    });
     console.log(`User ${socket.username} disconnected`);
   })
 
   socket.on('change_username', (data) => {
     console.log(`User ${socket.username} just changed his name to ${data.username}`);
+    io.sockets.emit('userNameChanged', {
+      prevName: socket.username,
+      currName: data.username,
+    })
     socket.username = data.username
   })
 
   socket.on('new_message', (data) => {
+    messagesRef.push(data);
     io.sockets.emit('add_msg', {
       message: data.message,
-      username: socket.username,
-      className: data.className
+      userID: data.userID,
+      userName: socket.username,
+      timeSent: data.timeSent,
+      image: data.image,
+      isAdmin: data.isAdmin,
     });
   })
 

@@ -1,5 +1,17 @@
-$(function() {
-  var socket = io.connect("http://localhost:3000");
+$(function () {
+  const token = generateToken(32);
+  const image = Math.round(Math.random() * 98);
+  var socket = io.connect("http://localhost:3000", {
+    query:
+      {
+        userID: token,
+        image: image,
+        isAdmin: false,
+        email: 'anonymous@mail.net',
+        userName: 'Anonymous',
+        status: 'online'
+      }
+  });
 
   var message = $("#message");
   var username = $("#username");
@@ -10,48 +22,38 @@ $(function() {
   var feedback = $("#feedback");
 
 
+  function generateToken(n) {
+    var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var token = '';
+    for (var i = 0; i < n; i++) {
+      token += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return token;
+  }
+
   send_message.click(() => {
     if (message.val().length > 0) {
       socket.emit("new_message", {
         message: message.val(),
-        className: alertClass
+        // className: alertClass,
+        // email: 'test@mail.ru',
+        timeSent: new Date(),
+        image,
+        isAdmin: false,
+        userID: token,
       });
     }
   });
 
-
-  var min = 1;
-  var max = 6;
-  var random = Math.floor(Math.random() * (max - min)) + min;
-
-  // Устаналиваем класс в переменную в зависимости от случайного числа
-  // Эти классы взяты из Bootstrap стилей
-  var alertClass;
-  switch (random) {
-    case 1:
-      alertClass = "secondary";
-      break;
-    case 2:
-      alertClass = "danger";
-      break;
-    case 3:
-      alertClass = "success";
-      break;
-    case 4:
-      alertClass = "warning";
-      break;
-    case 5:
-      alertClass = "info";
-      break;
-    case 6:
-      alertClass = "light";
-      break;
-  }
-
   socket.on("add_msg", data => {
     feedback.html("");
     message.val("");
-    chatroom.append(`<div class='alert alert-${data.className}'><b>${data.username}</b>: ${data.message}</div>`);
+    chatroom.append(`
+        <div class="output-message">
+        <img class="" src="https://randomuser.me/api/portraits/thumb/men/${data.image}.jpg" alt="">
+        <b>${data.userName}</b>: ${data.message}
+        </div>
+    `);
   });
 
   send_username.click(() => {
@@ -70,4 +72,5 @@ $(function() {
   socket.on("typing", data => {
     feedback.html(`<p><i>${data.username} печатает сообщение...</i></p>`);
   });
+
 });
