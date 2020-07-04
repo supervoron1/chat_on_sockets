@@ -38,6 +38,7 @@ app.use(express.static("public"));
 const ref = admin.database().ref();
 const messagesRef = ref.child('messages');
 const usersRef = ref.child('users');
+const chatsRef = ref.child('chats');
 const logsRef = ref.child('logs');
 
 // let messageRef = messagesRef.push(message);
@@ -106,8 +107,20 @@ io.on('connection', (socket) => {
     socket.username = data.username
   })
 
+  // socket.on('new_message', (data) => {
+  //   messagesRef.push(data);
+  //   io.sockets.emit('add_msg', {
+  //     message: data.message,
+  //     userID: data.userID,
+  //     userName: socket.username,
+  //     timeSent: data.timeSent,
+  //     image: data.image,
+  //     isAdmin: data.isAdmin,
+  //   });
+  // })
+
   socket.on('new_message', (data) => {
-    messagesRef.push(data);
+    chatsRef.child(`${data.chatID}`).push(data);
     io.sockets.emit('add_msg', {
       message: data.message,
       userID: data.userID,
@@ -116,6 +129,31 @@ io.on('connection', (socket) => {
       image: data.image,
       isAdmin: data.isAdmin,
     });
+  })
+
+  /*TODO переписать метод получения сообщений для новой структуры БД */
+  // socket.on('get_user_chat', (data) => {
+  //   const chatID = data.chatID;
+  //   if (chatID) {
+  //     messagesRef.orderByChild('chatID').equalTo(`${chatID}`).on('value', snapshot => {
+  //       let messages = snapshot.val();
+  //       io.sockets.emit('getMessagesForChatID', messages);
+  //       // messages ? io.sockets.emit('getMessagesForChatID', messages) : io.sockets.emit('getMessagesForID', false);
+  //     });
+  //   }
+  //
+  // })
+
+  socket.on('get_user_chat', (data) => {
+    const chatID = data.chatID;
+    if (chatID) {
+      chatsRef.child(`${chatID}`).on('value', snapshot => {
+        let messages = snapshot.val();
+        io.sockets.emit('getMessagesForChatID', messages);
+        // messages ? io.sockets.emit('getMessagesForChatID', messages) : io.sockets.emit('getMessagesForID', false);
+      });
+    }
+
   })
 
   socket.on('typing', (data) => {
