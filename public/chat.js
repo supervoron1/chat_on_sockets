@@ -1,5 +1,5 @@
 $(function () {
-  const token = generateToken(32);
+  const token = generateToken(16);
   const image = Math.round(Math.random() * 98);
   var socket = io.connect("http://localhost:3000", {
     query:
